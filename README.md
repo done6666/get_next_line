@@ -120,4 +120,4 @@ The main trade-off of using a single static pointer (as opposed to a static arra
 
 ### AI usage
 
-Claude (claude.ai) was used to **generate this README file** based on the completed source code and the subject's documentation requirements. The implementation itself — the algorithm design, the three-phase structure, and all C source files — was written independently beforehand. AI was not consulted during the coding phase.
+AI was used to **generate this README file** based on the completed source code and the subject's documentation requirements. The implementation itself — the algorithm design, the three-phase structure, and all C source files — was written independently beforehand. AI was not consulted during the coding phase.
