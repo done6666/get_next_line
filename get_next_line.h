@@ -6,7 +6,7 @@
 /*   By: opektas <opektas@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 23:56:48 by opektas           #+#    #+#             */
-/*   Updated: 2026/04/26 02:02:32 by opektas          ###   ########.fr       */
+/*   Updated: 2026/04/27 20:27:29 by opektas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@
 #  define BUFFER_SIZE 42
 # endif
 
-# include <fcntl.h>
 # include <unistd.h>
 # include <stdlib.h>
 
