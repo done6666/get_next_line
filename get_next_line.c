@@ -6,102 +6,60 @@
 /*   By: opektas <opektas@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 23:56:45 by opektas           #+#    #+#             */
-/*   Updated: 2026/04/26 01:39:54 by opektas          ###   ########.fr       */
+/*   Updated: 2026/05/10 04:09:40 by opektas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-static char	*ft_get_line(char *backup)
+static void	free_memory(t_memory **memory)
 {
-	size_t	i;
-	char	*line;
-
-	i = 0;
-	if (!backup || !backup[i])
-		return (NULL);
-	while (backup[i] && backup[i] != '\n')
-		i++;
-	line = (char *)malloc(sizeof(char) * (i + (backup[i] == '\n') + 1));
-	if (!line)
-		return (NULL);
-	i = 0;
-	while (backup[i] && backup[i] != '\n')
-	{
-		line[i] = backup[i];
-		i++;
-	}
-	if (backup[i] == '\n')
-	{
-		line[i] = backup[i];
-		i++;
-	}
-	line[i] = '\0';
-	return (line);
+	if ((*memory)->backup)
+		free((*memory)->backup);
+	free((*memory)->buffer);
+	free(*memory);
+	*memory = NULL;
 }
 
-static char	*ft_new_backup(char *backup)
+static char	*read_to_newline(int fd, t_memory **memory)
 {
-	int		i;
-	int		j;
-	char	*new_backup;
-
-	i = 0;
-	while (backup[i] && backup[i] != '\n')
-		i++;
-	if (!backup[i])
+	while ((*memory)->bytes != 0)
 	{
-		free(backup);
-		return (NULL);
-	}
-	new_backup = (char *)malloc(sizeof(char) * (ft_strlen(backup) - i + 1));
-	if (!new_backup)
-		return (NULL);
-	i++;
-	j = 0;
-	while (backup[i])
-		new_backup[j++] = backup[i++];
-	new_backup[j] = '\0';
-	free(backup);
-	return (new_backup);
-}
-
-static char	*ft_read_to_backup(int fd, char *backup)
-{
-	char	*buffer;
-	int		read_bytes;
-
-	buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
-	if (!buffer)
-		return (NULL);
-	read_bytes = 1;
-	while (!ft_strchr(backup, '\n') && read_bytes != 0)
-	{
-		read_bytes = read(fd, buffer, BUFFER_SIZE);
-		if (read_bytes == -1)
+		(*memory)->bytes = read(fd, (*memory)->buffer, BUFFER_SIZE);
+		if ((*memory)->bytes == -1)
 		{
-			free(buffer);
-			free(backup);
+			free_memory(&(*memory));
 			return (NULL);
 		}
-		buffer[read_bytes] = '\0';
-		backup = ft_strjoin(backup, buffer);
+		(*memory)->buffer[(*memory)->bytes] = '\0';
 	}
-	free(buffer);
-	return (backup);
+}
+
+static int	init_memory(t_memory **memory)
+{
+	if (*memory)
+		return (1);
+	*memory = malloc(sizeof(t_memory));
+	if (!memory)
+		return (0);
+	(*memory)->backup = NULL;
+	(*memory)->buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
+	if (!(*memory)->buffer)
+	{
+		free((*memory)->buffer);
+		*memory = NULL;
+		return (0);
+	}
+	(*memory)->bytes = 1;
+	return (1);
 }
 
 char	*get_next_line(int fd)
 {
-	static char	*backup;
-	char		*line;
+	static t_memory	*memory;
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || !init_memory(&memory))
 		return (NULL);
-	backup = ft_read_to_backup(fd, backup);
-	if (!backup)
-		return (NULL);
-	line = ft_get_line(backup);
-	backup = ft_new_backup(backup);
-	return (line);
+
+	return (0);
 }
