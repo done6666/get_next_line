@@ -6,7 +6,7 @@
 /*   By: opektas <opektas@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 23:56:51 by opektas           #+#    #+#             */
-/*   Updated: 2026/04/26 01:55:43 by opektas          ###   ########.fr       */
+/*   Updated: 2026/05/10 20:06:13 by opektas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,4 +65,38 @@ char	*ft_strchr(const char *s, int c)
 	if ((char)c == '\0')
 		return ((char *)&s[index]);
 	return (NULL);
+}
+
+char	*ft_strdup(const char *s)
+{
+	char	*str;
+	size_t	i;
+
+	str = malloc(sizeof(char) * (ft_strlen(s) + 1));
+	if (!str)
+		return (NULL);
+	i = -1;
+	while (s[++i])
+		str[i] = s[i];
+	str[i] = '\0';
+	return (str);
+}
+
+char	*ft_substr(const char *s, size_t start, size_t len)
+{
+	char	*str;
+	size_t	i;
+
+	if (!s || start >= ft_strlen(s))
+		return (ft_strdup(""));
+	if (len > ft_strlen(s) - start)
+		len = ft_strlen(s) - start;
+	str = malloc(sizeof(char) * (len + 1));
+	if (!str)
+		return (NULL);
+	i = -1;
+	while (++i < len)
+		str[i] = s[start + i];
+	str[i] = '\0';
+	return (str);
 }

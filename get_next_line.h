@@ -6,7 +6,7 @@
 /*   By: opektas <opektas@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 23:56:48 by opektas           #+#    #+#             */
-/*   Updated: 2026/05/10 18:54:25 by opektas          ###   ########.fr       */
+/*   Updated: 2026/05/10 20:03:29 by opektas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ typedef struct s_memory
 	char	*backup;
 	char	*buffer;
 	int		bytes;
+	char	*newline;
 }	t_memory;
 
 char	*get_next_line(int fd);
