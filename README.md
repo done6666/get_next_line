@@ -4,17 +4,17 @@ _This project has been created as part of the 42 curriculum by opektas._
 
 ## Description
 
-`get_next_line` is a C function that reads and returns one line at a time from a given file descriptor. Successive calls to the function allow reading an entire file line by line, retaining state between calls through the use of a **static variable**. The function works correctly whether reading from a regular file or from standard input (`fd = 0`), and handles any `BUFFER_SIZE` value set at compile time.
+`get_next_line` is a C function that reads and returns one line at a time from a given file descriptor. Successive calls allow reading an entire file line by line, retaining state between calls through a **static pointer to a memory struct**. The function works correctly whether reading from a regular file or from standard input (`fd = 0`), and handles any `BUFFER_SIZE` value set at compile time.
 
 The returned line includes the terminating `\n` character, except when the end of the file is reached and the file does not end with a newline.
 
 ### File structure
 
-| File                    | Purpose                                                           |
-| ----------------------- | ----------------------------------------------------------------- |
-| `get_next_line.c`       | Core function and three static helper functions                   |
-| `get_next_line_utils.c` | String utility functions (`ft_strlen`, `ft_strjoin`, `ft_strchr`) |
-| `get_next_line.h`       | Header: prototype, includes, and `BUFFER_SIZE` default            |
+| File                    | Purpose                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| `get_next_line.c`       | Core function and four static helper functions                                       |
+| `get_next_line_utils.c` | String utilities: `ft_strlen`, `ft_strjoin`, `ft_strchr`, `ft_strdup`, `ft_substr`  |
+| `get_next_line.h`       | Header: struct definition, prototypes, includes, and `BUFFER_SIZE` default           |
 
 ---
 
@@ -69,42 +69,52 @@ Returns the next line from `fd`, or `NULL` on EOF or error.
 
 ### Overview
 
-The function maintains a single `static char *backup` variable inside `get_next_line`. This pointer persists across calls and holds any data that was read from the file descriptor but not yet returned as a complete line. The algorithm is divided into three phases, each handled by a dedicated static helper function:
+All state is stored in a single `static t_memory *memory` pointer inside `get_next_line`. The struct groups the read buffer, the accumulated backup string, the byte count from the last `read()` call, and a helper pointer for newline detection. Each call passes through three phases handled by dedicated static functions:
 
 ```
 get_next_line(fd)
     │
-    ├─► ft_read_to_backup(fd, backup)   — accumulate data until '\n' or EOF
+    ├─► init_memory(&memory)      — allocate and initialise the struct on first call
     │
-    ├─► ft_get_line(backup)             — extract and return the first line
+    ├─► read_to_newline(fd, &memory) — accumulate data until '\n' or EOF
     │
-    └─► ft_new_backup(backup)           — trim the returned line from backup
+    └─► cut_line(&memory)         — extract the line, trim backup, return to caller
 ```
 
-### Phase 1 — `ft_read_to_backup`
+### `t_memory` struct
 
-Reads from `fd` in chunks of `BUFFER_SIZE` bytes using `read()`. After each read, the chunk is appended to `backup` via `ft_strjoin` (which also frees the old `backup`). Reading continues until either a `\n` is found inside `backup` or `read()` returns 0 (EOF). If `read()` returns -1, both `buffer` and `backup` are freed and `NULL` is returned.
+```c
+typedef struct s_memory
+{
+    char    *backup;   // data read but not yet returned
+    char    *buffer;   // raw read buffer of BUFFER_SIZE bytes
+    int      bytes;    // return value of the last read() call
+    char    *newline;  // reused as a temporary pointer during cut_line
+}   t_memory;
+```
 
-This approach ensures **minimal reads per call**: as soon as a newline is detected in the accumulated buffer, no further `read()` calls are made.
+### Phase 1 — `init_memory`
 
-### Phase 2 — `ft_get_line`
+Runs only when `memory` is `NULL` (the very first call, or after a full cleanup). Allocates the struct and the fixed-size `buffer`. Sets `bytes` to `1` so the read loop in the next phase starts normally. If any allocation fails, `free_memory` is called and `0` is returned, causing `get_next_line` to return `NULL`.
 
-Scans `backup` from the beginning up to and including the first `\n` (or to the end if no `\n` exists). Allocates a new string of exactly the right size and copies the line into it. This is the string returned to the caller.
+### Phase 2 — `read_to_newline`
 
-### Phase 3 — `ft_new_backup`
+Reads from `fd` in chunks of `BUFFER_SIZE` bytes. After each `read()`, the chunk is appended to `backup` via `ft_strjoin` (which also frees the old `backup`). The loop continues until either `\n` is found in `backup` or `bytes` reaches `0` (EOF). If `read()` returns `-1`, `free_memory` is called and `0` is returned.
 
-After the line has been extracted, the remaining content in `backup` (everything after the `\n`) must be preserved for the next call. `ft_new_backup` advances past the `\n`, copies the tail into a newly allocated string, frees the old `backup`, and returns the new one. If there is nothing left after the `\n`, it frees `backup` and returns `NULL`, so the next call starts clean.
+This ensures **minimal reads per call**: reading stops as soon as a newline is detected in the accumulated data.
 
-### Justification
+### Phase 3 — `cut_line`
 
-The static-buffer approach is the canonical solution for `get_next_line` because:
+If `backup` is empty or `NULL`, there is nothing left to return — `free_memory` is called and `NULL` is returned to signal EOF. Otherwise:
 
-- **It avoids `lseek`**: the file descriptor's position is never rewound. Data read beyond the current line boundary is safely held in `backup` rather than discarded.
-- **It works on non-seekable descriptors**: pipes, standard input, and sockets cannot use `lseek`. This design handles all of them transparently.
-- **Memory efficiency**: only one `BUFFER_SIZE`-sized chunk is allocated per read cycle. There is no full file preload.
-- **Correctness across buffer sizes**: because the logic does not depend on the buffer aligning with newlines, the function behaves identically for `BUFFER_SIZE=1`, `BUFFER_SIZE=42`, or `BUFFER_SIZE=10000000`.
+1. A line is extracted from `backup` up to and including the first `\n` (or to the end if no `\n` exists) using `ft_substr`.
+2. The remainder after the `\n` is duplicated into a new string via `ft_strdup` and becomes the new `backup`.
+3. The old `backup` is freed.
+4. The extracted line is returned to the caller.
 
-The main trade-off of using a single static pointer (as opposed to a static array indexed by `fd`) is that this implementation handles **one file descriptor at a time**. Interleaving reads from different file descriptors is undefined behavior in this mandatory version. The bonus part addresses this with an array-indexed approach.
+### `free_memory`
+
+Frees `backup`, `buffer`, and the struct itself, then sets the pointer to `NULL`. Called on error, EOF, or failed allocation to ensure no memory is leaked between calls.
 
 ---
 
@@ -120,4 +130,4 @@ The main trade-off of using a single static pointer (as opposed to a static arra
 
 ### AI usage
 
-AI was used to **generate this README file** based on the completed source code and the subject's documentation requirements. The implementation itself — the algorithm design, the three-phase structure, and all C source files — was written independently beforehand. AI was not consulted during the coding phase.
+AI was used to **generate test cases** for verifying edge-case behaviour (empty files, no trailing newline, large buffer sizes, etc.). The implementation — struct design, algorithm, and all C source files — was written independently.

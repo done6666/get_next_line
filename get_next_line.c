@@ -6,7 +6,7 @@
 /*   By: opektas <opektas@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 23:56:45 by opektas           #+#    #+#             */
-/*   Updated: 2026/05/10 20:16:08 by opektas          ###   ########.fr       */
+/*   Updated: 2026/05/11 01:27:01 by opektas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,6 @@ static int	read_to_newline(int fd, t_memory **memory)
 		(*memory)->buffer[(*memory)->bytes] = '\0';
 		(*memory)->backup = ft_strjoin((*memory)->backup, (*memory)->buffer);
 	}
-	free((*memory)->buffer);
-	(*memory)->buffer = NULL;
 	return (1);
 }
 

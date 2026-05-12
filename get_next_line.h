@@ -6,7 +6,7 @@
 /*   By: opektas <opektas@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 23:56:48 by opektas           #+#    #+#             */
-/*   Updated: 2026/05/10 20:03:29 by opektas          ###   ########.fr       */
+/*   Updated: 2026/05/11 01:21:16 by opektas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,5 +32,7 @@ char	*get_next_line(int fd);
 char	*ft_strchr(const char *s, int c);
 char	*ft_strjoin(char *s1, char *s2);
 size_t	ft_strlen(const char *s);
+char	*ft_strdup(const char *s);
+char	*ft_substr(const char *s, size_t start, size_t len);
 
 #endif
